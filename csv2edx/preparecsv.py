@@ -5,12 +5,6 @@ from shutil import move
 from os import remove
 from glob import glob
 
-MATE_ORIGINAL="mate/MOOCs Mate albero materia - riepilogo.tsv"
-FISICA_ORIGINAL="fisica/fisica-1.tsv"
-
-COURSES=[MATE_ORIGINAL,FISICA_ORIGINAL]
-COLUMNS_NEEDED={MATE_ORIGINAL:[0,1,2,4,8],FISICA_ORIGINAL:[0,1,2,6]}
-deleteTmpFiles=True
 
 class PrepareCsv(object):
     '''
@@ -33,7 +27,8 @@ class PrepareCsv(object):
         tmpfile=self.removeUnusedColums(fn)
         tmpfile=self.stripEmptyRows(tmpfile)
         tmpfile=self.addEmptyElements(tmpfile)
-        tmpfile=self.addMissedCoding(tmpfile)
+        if (len(self.cols)<5):
+            tmpfile=self.addMissedCoding(tmpfile)
         
         preparedFileName=fn+".PREPARED"
         move(tmpfile,preparedFileName)
@@ -111,9 +106,8 @@ class PrepareCsv(object):
         new_row=[]
         for counter,row in enumerate(csv.reader(input,delimiter='\t')):    
                 new_row=row
-                if (len(row)<5):   #missed code and maybe url video
-                    code=self.edxUrlName(row[0],row[1],row[2])
-                    new_row.insert(3,code)
+                code=self.edxUrlName(row[0],row[1],row[2])
+                new_row.insert(3,code)
                     
                 writer.writerow(new_row)
         input.close()
