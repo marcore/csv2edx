@@ -26,19 +26,19 @@ Usage
 
 Usage: csv2edx [options] filename.csv
 
-Options:
-  --version             show program's version number and exit
-  -h, --help            show this help message and exit
-  -v, --verbose         verbose error messages
-  -o OUTPUT_FN, --output-xbundle=OUTPUT_FN
-                        Filename for output xbundle file
-  -d OUTPUT_DIR, --output-directory=OUTPUT_DIR
-                        Directory name for output course XML files
-  -m, --merge-chapters  merge chapters into existing course directory
-  -p, --prepare-csv     Prepare csv file to be in the csv2edx format
-  -cols COLS2PRESERVE, --cols2preserve=COLS2PRESERVE
-                        Columns to preserve in the final format of csv file
-                        (see -p option)
-  -c CONFIG_FILE, --config-file=CONFIG_FILE
-                        configuration file to load
+	Options:
+	  --version             show program's version number and exit
+	  -h, --help            show this help message and exit
+	  -v, --verbose         verbose error messages
+	  -o OUTPUT_FN, --output-xbundle=OUTPUT_FN
+	                        Filename for output xbundle file
+	  -d OUTPUT_DIR, --output-directory=OUTPUT_DIR
+	                        Directory name for output course XML files
+	  -m, --merge-chapters  merge chapters into existing course directory
+	  -p, --prepare-csv     Prepare csv file to be in the csv2edx format
+	  -cols COLS2PRESERVE, --cols2preserve=COLS2PRESERVE
+	                        Columns to preserve in the final format of csv file
+	                        (see -p option)
+	  -c CONFIG_FILE, --config-file=CONFIG_FILE
+	                        configuration file to load
  
