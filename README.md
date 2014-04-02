@@ -36,7 +36,7 @@ Usage: csv2edx [options] filename.csv
 	                        Directory name for output course XML files
 	  -m, --merge-chapters  merge chapters into existing course directory
 	  -p, --prepare-csv     Prepare csv file to be in the csv2edx format
-	  -cols COLS2PRESERVE, --cols2preserve=COLS2PRESERVE
+	  -cls COLS2PRESERVE, --cols2preserve=COLS2PRESERVE
 	                        Columns to preserve in the final format of csv file
 	                        (see -p option)
 	  -c CONFIG_FILE, --config-file=CONFIG_FILE

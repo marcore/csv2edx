@@ -232,7 +232,7 @@ def CommandLine():
                       dest="prepare_csv",
                       default=False,
                       help="Prepare csv file to be in the csv2edx format",)
-    parser.add_option("-cols", "--cols2preserve",
+    parser.add_option("-cls", "--cols2preserve",
                       action="store",
                       dest="cols2preserve",
                       default="",
