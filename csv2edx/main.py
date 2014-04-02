@@ -123,6 +123,8 @@ class csv2edx(object):
             for counter,row in enumerate(reader):
                 currentVertical=etree.Element("vertical", attrib={})
                 video=etree.Element("video", attrib={})
+                if (self.verbose):
+                    print "process row :" +str(row)
                 item_id=row[3]
                
                 for idx,col in enumerate(row):
