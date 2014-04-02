@@ -39,6 +39,3 @@ Usage: csv2edx [options] filename.csv
 	  -cls COLS2PRESERVE, --cols2preserve=COLS2PRESERVE
 	                        Columns to preserve in the final format of csv file
 	                        (see -p option)
-	  -c CONFIG_FILE, --config-file=CONFIG_FILE
-	                        configuration file to load
- 
