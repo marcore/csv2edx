@@ -115,9 +115,8 @@ class PrepareCsv(object):
         return newfilename
 
     def cleanTmp(self,c):
-        if (deleteTmpFiles):
-            for fl in glob(c+"_tmp*"):
-                remove(fl)
+        for fl in glob(c+"_tmp*"):
+            remove(fl)
             
 
     
