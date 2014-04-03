@@ -54,6 +54,7 @@ class csv2edx(object):
         self.verbose=verbose
         
         self.fn=fn
+        self.prepare_csv=prepare_csv
         if prepare_csv :
             self.pcsv=preparecsv.PrepareCsv(fn,cols2preserve,verbose)
             preparedFileName=self.pcsv.prepare()
@@ -112,8 +113,7 @@ class csv2edx(object):
 
     def createXBundle(self):
        
-        course=etree.Element("course", attrib={})
-        
+        course=etree.Element("course", attrib={"display_name":self.output_fn[:-8]})
         with open(self.fn, 'rb') as f:
             reader = csv.reader(f,delimiter='\t')
             
@@ -149,6 +149,7 @@ class csv2edx(object):
                         
                         video=etree.Element("video", attrib={})
                         currentVertical.set("url_name",col)
+                        video.set("display_name",currentVertical.get("display_name"))
                         video.set("url_name",col+"_video")
                     elif idx == 4 :
                         video_id=self.video_id(col)
