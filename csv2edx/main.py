@@ -8,7 +8,9 @@ import optparse
 from path import path    # needs path.py
 from lxml import etree
 from urlparse import urlparse, parse_qs
+import ConfigParser
 
+CONFIG_FILENAME='csv2edx.cfg'
 
 class csv2edx(object):
     '''
@@ -34,7 +36,8 @@ class csv2edx(object):
                  output_dir='',
                  do_merge=False,
                  imurl='images',
-                 do_images=True):
+                 do_images=True,
+                 courseconf=[]):
 
         if not output_dir:
             output_dir = os.path.abspath('.')
@@ -60,7 +63,7 @@ class csv2edx(object):
             preparedFileName=self.pcsv.prepare()
             
             if (verbose):
-                print "Colums to preserve : "+str(cols2preserve)
+                print "Colums to preserve : "+str(self.pcsv.cols)
                 print "Prepared file : "+str(preparedFileName)
            
             self.fn=preparedFileName
@@ -71,9 +74,11 @@ class csv2edx(object):
             else:
                 output_fn = fn + '.xbundle'
         self.output_fn = output_fn
-
-        
-        
+        self.config={}
+        for i in courseconf:
+            self.config[i[0]]=i[1]
+            
+        print self.config
         
     def convert(self):
         
@@ -113,7 +118,10 @@ class csv2edx(object):
 
     def createXBundle(self):
        
-        course=etree.Element("course", attrib={"display_name":self.output_fn[:-8]})
+        course=etree.Element("course", attrib={})
+        for k in self.config.keys():
+            course.set(k,self.config.get(k))
+       
         with open(self.fn, 'rb') as f:
             reader = csv.reader(f,delimiter='\t')
             
@@ -126,7 +134,7 @@ class csv2edx(object):
                 if (self.verbose):
                     print "process row :" +str(row)
                 item_id=row[3]
-               
+                isVideo=(self.video_id(row[4])!=None)
                 for idx,col in enumerate(row):
                     col=col.decode('utf-8', 'xmlcharrefreplace')
                     if idx == 0 :
@@ -146,20 +154,28 @@ class csv2edx(object):
                     elif idx == 2 :
                         currentVertical.set("display_name",col)
                     elif idx == 3 :
-                        
-                        video=etree.Element("video", attrib={})
                         currentVertical.set("url_name",col)
-                        video.set("display_name",currentVertical.get("display_name"))
-                        video.set("url_name",col+"_video")
+                        if (isVideo):
+                            video=etree.Element("video", attrib={})
+                            video.set("display_name",currentVertical.get("display_name"))
+                            video.set("url_name",col+"_video")
+                        
                     elif idx == 4 :
-                        video_id=self.video_id(col)
-                        video.set("youtube","1.0:"+video_id)
-                        currentVertical.append(video)
+                        if (isVideo):
+                            video_id=self.video_id(col)
+                            video.set("youtube","1.0:"+str(video_id))
+                            currentVertical.append(video)
                 if (changedChapter):
                     
                     course.append(currentChapter)
                 else:
-                    currentSequential.append(currentVertical)
+                    if (not isVideo):
+                        previousVertical=etree.parse(source=self.output_dir+"/vertical/"+currentVertical.get("url_name")+".xml").getroot()
+                        previousVertical.set("display_name",currentVertical.get("display_name"))
+                        previousVertical.set("url_name",currentVertical.get("url_name"))
+                        currentSequential.append(previousVertical)
+                    else:
+                        currentSequential.append(currentVertical)
                 
          
         return course               
@@ -209,6 +225,9 @@ class csv2edx(object):
           
             
 def CommandLine():
+    config = ConfigParser.ConfigParser()
+    config.read(CONFIG_FILENAME)
+    
     parser = optparse.OptionParser(usage="usage: %prog [options] filename.csv",
                                    version="%prog 1.0")
     parser.add_option('-v', '--verbose', 
@@ -256,6 +275,7 @@ def CommandLine():
                   output_dir=opts.output_dir,
                   do_merge=opts.merge,
                   prepare_csv=opts.prepare_csv,
-                  cols2preserve=cols
+                  cols2preserve=cols,
+                  courseconf=config.items("course")
         )
     c.convert()
