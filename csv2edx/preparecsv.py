@@ -4,6 +4,10 @@ import csv
 from shutil import move
 from os import remove
 from glob import glob
+from timeit import itertools
+
+
+
 
 
 class PrepareCsv(object):
@@ -24,11 +28,22 @@ class PrepareCsv(object):
     
     def prepare(self):
         fn=self.fn
-        tmpfile=self.removeUnusedColums(fn)
-        tmpfile=self.stripEmptyRows(tmpfile)
-        tmpfile=self.addEmptyElements(tmpfile)
+        tmpfile=self.addEmptyElements(fn)
+        shiftNeeded=False
         if (len(self.cols)<5):
             tmpfile=self.addMissedCoding(tmpfile)
+            self.addNewColum2Preserve(tmpfile)
+            shiftNeeded=True
+            if self.verbose:
+                print "Cols2preserve : "+str(self.cols)
+        tmpfile=self.removeUnusedColums(tmpfile)
+        
+        if (shiftNeeded):
+            tmpfile=self.shiftColumCodeToThird(tmpfile)
+        
+        tmpfile=self.stripEmptyRows(tmpfile)
+        
+        
         
         preparedFileName=fn+".PREPARED"
         move(tmpfile,preparedFileName)
@@ -41,6 +56,11 @@ class PrepareCsv(object):
     def edxUrlName(self,chapterName,sequentialName,verticalName):
         return "W"+chapterName[0]+"M"+sequentialName[0]+verticalName[:2]
     
+    def addNewColum2Preserve(self,filename):
+        cols2preserve=[i+1 for i in self.cols]
+        cols2preserve.insert(0, 0)
+        self.cols=cols2preserve
+        
     def addEmptyElements(self,filename):
         newfilename=filename+"_tmp"
         input = open(filename, 'rb')
@@ -56,16 +76,17 @@ class PrepareCsv(object):
                     if (any(col)):                    
                         new_row.insert(idx,col)
                     else:
-                        if (idx<=2): # automatic inser only for chapter and sequencial name column
-                            new_row.insert(idx,previous_row[idx])
-                        
+                        if (idx!=self.cols[-1]): # automatic inser only for chapter and sequencial name column
+                            try:
+                                new_row.insert(idx,previous_row[idx])
+                            except IndexError:
+                                print 'Skipped empty elements for :'+str(row)
                 previous_row=new_row        
                 
                 writer.writerow(new_row)
         input.close()
         output.close()
         return newfilename    
-    
     def removeUnusedColums(self,filename):
         newfilename=filename+"_tmp"
         input = open(filename, 'rb')
@@ -78,6 +99,28 @@ class PrepareCsv(object):
             if (counter>0):        #skip csv header    
                 new_row = [col for idx, col in enumerate(row) if idx in self.cols]        
                 writer.writerow(new_row)
+        input.close()
+        output.close()
+        return newfilename
+    def shiftColumCodeToThird(self,filename):
+        newfilename=filename+"_tmp"
+        input = open(filename, 'rb')
+        output = open(newfilename, 'wb')
+        if self.verbose:
+            print "Reading "+filename+" and writing to "+newfilename
+        writer = csv.writer(output,delimiter='\t')
+        
+        for counter,row in enumerate(csv.reader(input,delimiter='\t')):
+            new_row=[]
+            for idx,col in enumerate(row):
+                colempty=""
+                try:
+                    colempty=row[4]
+                except IndexError:
+                    print 'Set last column to :'+colempty
+                new_row=[row[1],row[2],row[3],row[0],colempty]
+            
+            writer.writerow(new_row)
         input.close()
         output.close()
         return newfilename    
@@ -104,11 +147,13 @@ class PrepareCsv(object):
             print "Reading "+filename+" and writing to "+newfilename
         writer = csv.writer(output,delimiter='\t')
         new_row=[]
-        for counter,row in enumerate(csv.reader(input,delimiter='\t')):    
+        for counter,row in enumerate(csv.reader(input,delimiter='\t')):
+            if self.verbose:
+                print "addMissedCoding-Processing "+str(row)    
                 new_row=row
-                code=self.edxUrlName(row[0],row[1],row[2])
-                new_row.insert(3,code)
-                    
+                code=row[0]+row[2]+row[4]#self.edxUrlName(row[0],row[1],row[2])
+                #new_row.insert(3,code)
+                new_row.insert(0,code)   
                 writer.writerow(new_row)
         input.close()
         output.close()
