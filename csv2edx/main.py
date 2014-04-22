@@ -135,6 +135,8 @@ class csv2edx(object):
                     print "process row :" +str(row)
                 item_id=row[3]
                 isVideo=(self.video_id(row[4])!=None)
+                if (self.verbose):
+                    print "the row isVideo ?"+str(isVideo)
                 for idx,col in enumerate(row):
                     col=col.decode('utf-8', 'xmlcharrefreplace')
                     if idx == 0 :
@@ -148,8 +150,16 @@ class csv2edx(object):
                             changedChapter=False
                     elif idx == 1 :
                         if col != currentSequential.get("display_name"):
+                            sequentialurlname=item_id[:4]
                             currentSequential=etree.Element("sequential", attrib={"display_name":col})
-                            currentSequential.set("url_name",item_id[:4])
+                            try:
+                                previousSequential=etree.parse(source=self.output_dir+"/sequential/"+sequentialurlname+".xml").getroot()
+                                for a in previousSequential.attrib.keys():
+                                    currentSequential.set(a,previousSequential.get(a))
+                            except IOError:
+                                print 'Can\'t read existing sequential in :'+sequentialurlname
+                            currentSequential.set("display_name",col)
+                            currentSequential.set("url_name",sequentialurlname)
                             currentChapter.append(currentSequential)
                     elif idx == 2 :
                         currentVertical.set("display_name",col)
@@ -170,10 +180,16 @@ class csv2edx(object):
                     course.append(currentChapter)
                 else:
                     if (not isVideo):
-                        previousVertical=etree.parse(source=self.output_dir+"/vertical/"+currentVertical.get("url_name")+".xml").getroot()
-                        previousVertical.set("display_name",currentVertical.get("display_name"))
-                        previousVertical.set("url_name",currentVertical.get("url_name"))
-                        currentSequential.append(previousVertical)
+                        try:
+                            if (self.verbose):
+                                print "Try to parse existing file: "+self.output_dir+"/vertical/"+currentVertical.get("url_name")+".xml"
+                            previousVertical=etree.parse(source=self.output_dir+"/vertical/"+currentVertical.get("url_name")+".xml").getroot()
+                            previousVertical.set("display_name",currentVertical.get("display_name"))
+                            previousVertical.set("url_name",currentVertical.get("url_name"))
+                            currentSequential.append(previousVertical)
+                        except IOError:
+                            print 'Skipped empty elements for :'+currentVertical.get("url_name")
+                            currentSequential.append(currentVertical)
                     else:
                         currentSequential.append(currentVertical)
                 

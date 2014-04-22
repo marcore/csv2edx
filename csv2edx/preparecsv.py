@@ -69,21 +69,26 @@ class PrepareCsv(object):
             print "Reading "+filename+" and writing to "+newfilename
         writer = csv.writer(output,delimiter='\t')
         previous_row=[]
-        for counter,row in enumerate(csv.reader(input,delimiter='\t')):    
-                new_row=[]
-                for idx,col in enumerate(row):
+        for counter,row in enumerate(csv.reader(input,delimiter='\t')):
+                if (self.verbose):
+                    print "process row :" +str(row)
+                if not all(field=='' for field in row):    
+                    new_row=[]
+                    for idx,col in enumerate(row):
+                        
+                        if (any(col)):                    
+                            new_row.insert(idx,col)
+                        else:
+                            if (idx!=self.cols[-1]): # automatic inser only for chapter and sequencial name column
+                                try:
+                                    new_row.insert(idx,previous_row[idx])
+                                except IndexError:
+                                    print 'Skipped empty elements for :'+str(row)
+                            else:
+                                new_row.insert(idx,"") #empty col for video
+                    previous_row=new_row        
                     
-                    if (any(col)):                    
-                        new_row.insert(idx,col)
-                    else:
-                        if (idx!=self.cols[-1]): # automatic inser only for chapter and sequencial name column
-                            try:
-                                new_row.insert(idx,previous_row[idx])
-                            except IndexError:
-                                print 'Skipped empty elements for :'+str(row)
-                previous_row=new_row        
-                
-                writer.writerow(new_row)
+                    writer.writerow(new_row)
         input.close()
         output.close()
         return newfilename    
