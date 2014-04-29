@@ -175,24 +175,35 @@ class csv2edx(object):
                             video_id=self.video_id(col)
                             video.set("youtube","1.0:"+str(video_id))
                             currentVertical.append(video)
-                if (changedChapter):
-                    
-                    course.append(currentChapter)
-                else:
-                    if (not isVideo):
-                        try:
-                            if (self.verbose):
-                                print "Try to parse existing file: "+self.output_dir+"/vertical/"+currentVertical.get("url_name")+".xml"
-                            previousVertical=etree.parse(source=self.output_dir+"/vertical/"+currentVertical.get("url_name")+".xml").getroot()
-                            previousVertical.set("display_name",currentVertical.get("display_name"))
-                            previousVertical.set("url_name",currentVertical.get("url_name"))
-                            currentSequential.append(previousVertical)
-                        except IOError:
-                            print 'Skipped empty elements for :'+currentVertical.get("url_name")
-                            currentSequential.append(currentVertical)
-                    else:
+                if (self.verbose):
+                    print "vertical generato"+etree.tostring(currentVertical, pretty_print=True)
+                #if (changedChapter):
+                #    if (self.verbose):
+                #        print "Aggiungo capitolo"+etree.tostring(currentChapter, pretty_print=True)
+                #    course.append(currentChapter)
+                #else:
+                if (not isVideo):
+                    try:
+                        if (self.verbose):
+                            print "Try to parse existing file: "+self.output_dir+"/vertical/"+currentVertical.get("url_name")+".xml"
+                        previousVertical=etree.parse(source=self.output_dir+"/vertical/"+currentVertical.get("url_name")+".xml").getroot()
+                        previousVertical.set("display_name",currentVertical.get("display_name"))
+                        previousVertical.set("url_name",currentVertical.get("url_name"))
+                        currentSequential.append(previousVertical)
+                    except IOError:
+                        print 'Skipped empty elements for :'+currentVertical.get("url_name")
                         currentSequential.append(currentVertical)
-                
+                else:
+                    if (self.verbose):
+                        print "Aggiungo vertical"+etree.tostring(currentVertical, pretty_print=True)+" al sequential corrente"
+                    currentSequential.append(currentVertical)
+                    if (self.verbose):
+                        print "Risultato : "+etree.tostring(currentSequential, pretty_print=True)
+                        print "Capitolo attuale: "+etree.tostring(currentChapter, pretty_print=True)
+                if (changedChapter):
+                    if (self.verbose):
+                        print "Aggiungo capitolo"+etree.tostring(currentChapter, pretty_print=True)
+                    course.append(currentChapter)
          
         return course               
     
