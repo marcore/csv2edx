@@ -174,6 +174,7 @@ class csv2edx(object):
                         if (isVideo):
                             video_id=self.video_id(col)
                             video.set("youtube","1.0:"+str(video_id))
+                            video.set("sub",str(video_id))
                             currentVertical.append(video)
                 if (self.verbose):
                     print "vertical generato"+etree.tostring(currentVertical, pretty_print=True)
