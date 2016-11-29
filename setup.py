@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='csv2edx',
-    version='0.1.0',
+    version='0.2.0',
     author='Marco Re',
     author_email='marco.re@polimi.it',
     packages=['csv2edx','csv2edx.test'],
@@ -18,6 +18,7 @@ setup(
         },
     install_requires=['lxml == 3.2.0',
                       'path.py',
+                      'dropbox == 7.1.1'
                       ],
     package_dir={'csv2edx': 'csv2edx'},
     package_data={ 'csv2edx': ['render/*',] },

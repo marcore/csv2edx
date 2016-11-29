@@ -9,6 +9,7 @@ import optparse
 from path import path    # needs path.py
 from lxml import etree
 from urlparse import urlparse, parse_qs
+from dropbox_manager import DropboxManager
 import ConfigParser
 
 CONFIG_FILENAME = 'csv2edx.cfg'
@@ -40,7 +41,8 @@ class csv2edx(object):
                  do_merge=False,
                  imurl='images',
                  do_images=True,
-                 courseconf=[]):
+                 courseconf=[],
+                 dropboxconf=[]):
 
         if not output_dir:
             output_dir = os.path.abspath('.')
@@ -83,7 +85,9 @@ class csv2edx(object):
         for i in courseconf:
             self.config[i[0]] = i[1]
 
-        print self.config
+        self.dropbox_config = {}
+        for i in dropboxconf:
+            self.dropbox_config[i[0]] = i[1]
 
     def convert(self):
 
@@ -338,6 +342,34 @@ class csv2edx(object):
             input -= ints[i] * count
         return ''.join(result)
 
+    def copyQuiz(self):
+
+        quiz_folder = self.dropbox_config.get("quiz_folder")
+        rename = self.dropbox_config.get("rename", True)
+        default_attempts = self.dropbox_config.get("default_attempts", 3)
+        if quiz_folder:
+            dr = DropboxManager(self.output_dir,rename, default_attempts)
+            dr.process_quiz(quiz_folder)
+        else:
+            print "No quiz_folder configurated in csv2edx.cfg file"
+
+    def copyAndConvertSrt(self):
+
+        srt_folder = self.dropbox_config.get("srt_folder")
+        if srt_folder:
+            dr = DropboxManager(self.output_dir)
+            dr.process_srt(srt_folder)
+        else:
+            print "No srt_folder configurated in csv2edx.cfg file"
+
+    def copyHtml(self):
+
+        html_folder = self.dropbox_config.get("html_folder")
+        if html_folder:
+            dr = DropboxManager(self.output_dir)
+            dr.process_html(html_folder)
+        else:
+            print "No html_folder configurated in csv2edx.cfg file"
 
 def CommandLine():
     config = ConfigParser.ConfigParser()
@@ -398,6 +430,10 @@ def CommandLine():
                 prepare_csv=opts.prepare_csv,
                 cols2preserve=cols,
                 transcript_enabled=opts.transcript_enabled,
-                courseconf=config.items("course")
+                courseconf=config.items("course"),
+                dropboxconf=config.items("dropbox"),
                 )
     c.convert()
+    c.copyQuiz()
+    c.copyAndConvertSrt()
+    c.copyHtml()
