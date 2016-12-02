@@ -199,77 +199,89 @@ class csv2edx(object):
                     elif idx == 3:
                         col = col.replace("$", "")
                         currentVertical.set("url_name", col)
+                        url_name_video = col + "_video"
                         if (isVideo):
                             video = etree.Element("video", attrib={})
                             video.set(
                                 "display_name", currentVertical.get("display_name"))
-                            video.set("url_name", col + "_video")
+                            video.set("url_name", url_name_video)
                             if (self.transcript_enabled):
                                 video = self.addTranscriptVideo(video, col)
 
                     elif idx == 4:
-                        if (isVideo):
-                            if ("|" in col):
-                                video_urls = col.split("|")
-                                if (self.verbose):
-                                    print "Vertical has two videos to be splitted :" + str(video_urls)
-                                for counter, vu in enumerate(video_urls):
-                                    newVideoItem = etree.Element(
-                                        "video", attrib={})
-                                    newVideoItem.set("display_name", video.get(
-                                        "display_name") + " - Parte " + self.int_to_roman(counter + 1))
-                                    newVideoItem.set(
-                                        "url_name", video.get("url_name") + self.int_to_roman(counter + 1))
-                                    newVideo_ID = self.video_id(vu.strip())
-                                    newVideoItem.set(
-                                        "youtube", "1.0:" + str(newVideo_ID))
-                                    newVideoItem.set("sub", str(newVideo_ID))
-                                    if (self.transcript_enabled):
-                                        newVideoItem = self.addTranscriptVideo(
-                                            newVideoItem, currentVertical.get("url_name")+" - Parte "+ self.int_to_roman(counter + 1))
-                                    currentVertical.append(newVideoItem)
+                        if ("|" in col):
+                            lecture_elements = col.split("|")
+                            count_video = 0
+                            for l in lecture_elements:
+                                if self.video_id(l):
+                                    count_video = count_video+1
 
-                            else:
-                                video_id = self.video_id(col)
-                                video.set("youtube", "1.0:" + str(video_id))
-                                video.set("sub", str(video_id))
-                                #if (self.transcript_enabled):
-                                #    video = self.addTranscriptVideo(video, video_id)
-                                currentVertical.append(video)
+                            if (self.verbose):
+                                    print "Vertical has multiple elements  :" + str(lecture_elements)
+                            for counter, vu in enumerate(lecture_elements):
+                                if (self.verbose):
+                                    print "processing element  :" + str(vu)
+                                currentVertical = self.processLectureElement(currentVertical, vu, url_name_video, (counter+1),(count_video>1))
+
+                        else:
+                            #normal processing
+                            currentVertical = self.processLectureElement(currentVertical, col, url_name_video, 0, False)
+
                 if (self.verbose):
-                    print "vertical generato" + etree.tostring(currentVertical, pretty_print=True)
-                # if (changedChapter):
-                #    if (self.verbose):
-                #        print "Aggiungo capitolo"+etree.tostring(currentChapter, pretty_print=True)
-                #    course.append(currentChapter)
-                # else:
-                if (not isVideo):
-                    try:
-                        if (self.verbose):
-                            print "Try to parse existing file: " + self.output_dir + "/vertical/" + currentVertical.get("url_name") + ".xml"
-                        previousVertical = etree.parse(
-                            source=self.output_dir + "/vertical/" + currentVertical.get("url_name") + ".xml").getroot()
-                        previousVertical.set(
-                            "display_name", currentVertical.get("display_name"))
-                        previousVertical.set(
-                            "url_name", currentVertical.get("url_name"))
-                        currentSequential.append(previousVertical)
-                    except IOError:
-                        print 'Skipped empty elements for :' + currentVertical.get("url_name")
-                        currentSequential.append(currentVertical)
-                else:
-                    if (self.verbose):
-                        print "Aggiungo vertical" + etree.tostring(currentVertical, pretty_print=True) + " al sequential corrente"
-                    currentSequential.append(currentVertical)
-                    if (self.verbose):
-                        print "Risultato : " + etree.tostring(currentSequential, pretty_print=True)
-                        print "Capitolo attuale: " + etree.tostring(currentChapter, pretty_print=True)
+                    print "Aggiungo vertical" + etree.tostring(currentVertical, pretty_print=True) + " al sequential corrente"
+                currentSequential.append(currentVertical)
+                if (self.verbose):
+                    print "Risultato : " + etree.tostring(currentSequential, pretty_print=True)
+                    print "Capitolo attuale: " + etree.tostring(currentChapter, pretty_print=True)
                 if (changedChapter):
                     if (self.verbose):
                         print "Aggiungo capitolo" + etree.tostring(currentChapter, pretty_print=True)
                     course.append(currentChapter)
 
         return course
+
+    def processLectureElement(self, currentVertical, lecture_element, url_name_element,counter, multipleVideos):
+        isVideo = (self.video_id(lecture_element.strip()) != None)
+        display_name =  currentVertical.get("display_name")
+        if isVideo:
+            newVideoItem = etree.Element(
+                "video", attrib={})
+            if (counter > 0 and multipleVideos):
+                display_name = display_name + " - Parte " + self.int_to_roman(counter)
+            newVideoItem.set("display_name",  display_name)
+            url_name =  url_name_element
+            if (counter > 0 and multipleVideos):
+                url_name = url_name  + self.int_to_roman(counter)
+            newVideoItem.set(
+                "url_name", url_name)
+            newVideo_ID = self.video_id(lecture_element.strip())
+            newVideoItem.set(
+                "youtube", "1.0:" + str(newVideo_ID))
+            newVideoItem.set("sub", str(newVideo_ID))
+            if (self.transcript_enabled):
+                newVideoItem = self.addTranscriptVideo(
+                    newVideoItem, url_name)
+            currentVertical.append(newVideoItem)
+        else:
+            if "forum" in lecture_element:
+                discussionItem = etree.Element("discussion", attrib={})
+                discussionItem.set("url_name", currentVertical.get("url_name"))
+                discussionItem.set("display_name", currentVertical.get("display_name"))
+                discussionItem.set("discussion_target", currentVertical.get("display_name"))
+                currentVertical.append(discussionItem)
+            elif "html" in lecture_element or (lecture_element=="" and self.existsHtmlFile(currentVertical.get("url_name"))):
+                htmlItem = etree.Element("html", attrib={})
+                htmlItem.set("url_name", currentVertical.get("url_name"))
+                htmlItem.set("filename", currentVertical.get("url_name"))
+                htmlItem.set("display_name", currentVertical.get("display_name"))
+                currentVertical.append(htmlItem)
+
+        return currentVertical
+
+    def existsHtmlFile(self, filename):
+        html_file_path=self.output_dir + "/html/" + filename+ ".html"
+        print "Check exists : "+str(html_file_path)
+        return os.path.isfile(html_file_path)
 
     def addTranscriptVideo(self, video, col):
         transcriptPath = "/static/track/" + col + ".pdf"
@@ -434,6 +446,6 @@ def CommandLine():
                 dropboxconf=config.items("dropbox"),
                 )
     c.convert()
+    c.copyHtml()
     c.copyQuiz()
     c.copyAndConvertSrt()
-    c.copyHtml()

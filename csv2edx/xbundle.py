@@ -106,13 +106,13 @@ DEF_GRADING_POLICY_JSON = """
 
 class XBundle(object):
     '''
-    An XBundle is defined by two elements: course and metadata.  
+    An XBundle is defined by two elements: course and metadata.
     metadata includes policies and about.
     '''
 
     DescriptorTags = ['course','chapter','sequential','vertical','html','problem','video',
                       'conditional', 'combinedopenended', 'videosequence', 'problemset',
-                      'wrapper', 'poll_question', 'randomize', 'proctor' ]
+                      'wrapper', 'poll_question', 'randomize', 'proctor']
     KeepTogetherTags = []    # for latex2edx - simplier course structure
     MapTags = dict(section='sequential')
     DefaultSemester = '2013_Fall'
@@ -127,7 +127,7 @@ class XBundle(object):
         '''
         if keep_urls=True then the original url_name attributes are kept upon import and export,
         if nonrandom (ie non-Studio).
-        
+
         if keep_studio_urls=True and keep_urls=True, then keep random urls.
 
         no_overwrite: optional list of xml tags for which files should not be overwritten (eg course)
@@ -144,7 +144,7 @@ class XBundle(object):
         self.overwrite_files = []
         return
 
-        
+
     #----------------------------------------
     # creation by parts
 
@@ -169,13 +169,13 @@ class XBundle(object):
                     for child in xml:
                         walk(child)
             walk(xml)
-    
-        
+
+
     def add_policies(self, policies):
         '''add a policies XML subtree to the metadata'''
         self.metadata.append(policies)
 
-    
+
     def set_about(self, about):
         '''set about XML tree'''
         xabout = self.metadata.find('about')
@@ -195,7 +195,7 @@ class XBundle(object):
 
 
     #----------------------------------------
-    # load/save 
+    # load/save
 
     def load(self, fn):
         """
@@ -238,7 +238,7 @@ class XBundle(object):
         self.metadata = etree.Element('metadata')
         self.import_metadata_from_directory(dir)
         self.import_course_from_directory(dir)
-        
+
 
     def import_metadata_from_directory(self, dir):
         # load policies
@@ -251,7 +251,7 @@ class XBundle(object):
                 x = etree.SubElement(policies,os.path.basename(fn).replace('_','').replace('.json',''))
                 x.text = open(fn).read()
             self.add_policies(policies)
-        
+
         # load about files
         for afn in glob.glob(dir / 'about/*'):
             try:
@@ -259,7 +259,7 @@ class XBundle(object):
             except Exception as err:
                 print "Oops, failed to add file %s, error=%s" % (afn, err)
 
-                
+
     def import_course_from_directory(self, dir):
         '''load course tree, removing intermediate descriptors with url_name'''
         dir = path(dir)
@@ -272,7 +272,7 @@ class XBundle(object):
         self.fix_old_descriptor_name(self.course)
         # print self.pp_xml(self.course)
 
-        
+
     def fix_old_descriptor_name(self, xml):
         '''
         Turn name -> display_name on descriptor tags
@@ -295,7 +295,7 @@ class XBundle(object):
                     seq.addprevious(k)
                 sect.remove(seq)        # remove sequential from inside section
             sect.tag = 'sequential'
-        
+
 
     def is_not_random_urlname(self, un):
         if self.keep_studio_urls:        # keep url even if random looking
@@ -304,12 +304,12 @@ class XBundle(object):
         nrand = len('55bc076ad06e4ede9d0561948c03be2f')
         if not len(un)==nrand:
             return True
-        ndigits = len([z for z in un if z in string.digits])        
+        ndigits = len([z for z in un if z in string.digits])
         if ndigits<6:
             return True
         return False    # ie seems to be random
 
-        
+
     def update_metadata_from_policy(self, xml):
         # update metadaa for this element from policy, if exists
         policy = getattr(self,'policy')
@@ -322,10 +322,10 @@ class XBundle(object):
                 if xml.get(k,None) is None:    # don't overwrite xml's metadata setting, if exists already
                     xml.set(k,str(v))
 
-        
+
     def import_xml_removing_descriptor(self, dir, xml):
         '''
-        load XML file, recursively following and removing intermediate 
+        load XML file, recursively following and removing intermediate
         descriptors with url_name.
 
         if element is a DescriptorTag element, and display_name is missing, then
@@ -372,7 +372,7 @@ class XBundle(object):
                 xml = dxml
 
         fn = xml.get('filename','')
-        if xml.tag in ['html','problem'] and fn: # special for <html filename="..." display_name="..."/>
+        if xml.tag in ['html','problem','discussion'] and fn: # special for <html filename="..." display_name="..."/>
                                                  # and <problem filename="...">
             if xml.tag=='html':
                 if not fn.endswith('.html'):
@@ -386,7 +386,7 @@ class XBundle(object):
                 #if not fn.startswith('problems/'):
                 #    fn = 'problems/' + fn
                 options = {}
-                
+
             if not os.path.exists(dir/xml.tag/fn):
                 if '-' in fn:
                     fn = '%s/%s' % (fn.split('-',1)[0], fn)
@@ -404,7 +404,7 @@ class XBundle(object):
                 if dxml.tag in self.DescriptorTags and dxml.get('display_name') is None:
                     dxml.set('display_name',un)
                 xml = dxml
-            
+
         if self.skip_hidden:
             self.update_metadata_from_policy(xml)
             if xml.get('hide_from_toc','')=='true':
@@ -463,7 +463,7 @@ class XBundle(object):
             for k in pxml:
                 fn = self.PolicyTagMap.get(k.tag,k.tag) + '.json'
                 open(dir/fn,'w').write(k.text)    # write out content to policy directory file
-        
+
         adir = self.mkdir(self.dir/'about')
         for fxml in self.metadata.findall('about/file'):
             fn = fxml.get('filename')
@@ -533,7 +533,7 @@ class XBundle(object):
 
     def errlog(self, msg):
         print msg
-        
+
 
     def mkdir(self,p):
         '''p is a path'''
@@ -583,7 +583,7 @@ class XBundle(object):
         Construct and return a descriptor element for the given element
         at the head of xml.
 
-        Use url_name for the descriptor, if given.  
+        Use url_name for the descriptor, if given.
         """
         descriptor = etree.Element('descriptor')
         descriptor.set('tag',xml.tag)
@@ -716,7 +716,7 @@ if __name__=='__main__':
         options['force_studio_format'] = True
 
     cmd = sys.argv[argc]
-    
+
     if cmd=='test':
         RunTests()
 

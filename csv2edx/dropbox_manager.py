@@ -32,7 +32,6 @@ class DropboxManager(object):
 
     def download_folder(self, remote_folder):
         dbx = self.dbx
-        print 'linked account: ', dbx.users_get_current_account()
         dirpath = tempfile.mkdtemp()
         print "Using temp folder "+dirpath
         for entry in dbx.files_list_folder(remote_folder).entries:
@@ -79,7 +78,21 @@ class DropboxManager(object):
             self.removeBOM(filename)
             problem_file = filename
             problem = etree.parse(source=problem_file).getroot()
-
+            problem_url_name = os.path.splitext(os.path.basename(filename))[0]
+            url_name = self.course_folder+"/vertical/"+problem_url_name.split("_")[0]
+            verticalfile=url_name+".xml"
+            parser = etree.XMLParser(remove_blank_text=True)
+            vertical = etree.parse(source=verticalfile, parser=parser).getroot()
+            xpath = './/problem[url_name="'+problem_url_name+'"]'
+            vproblems = vertical.findall(xpath)
+            if (len(vproblems) == 0):
+                problem_ref = etree.Element(
+                    "problem", attrib={})
+                problem_ref.set("url_name",problem_url_name)
+                vertical.append(problem_ref)
+                self.sortchildrenby(vertical, 'url_name')
+                with open(verticalfile, "w") as file:
+                    file.write(etree.tostring(vertical, pretty_print=True))
             if self.rename:
                 display_name=problem.get("display_name")
                 if not display_name or display_name == "":
@@ -91,8 +104,6 @@ class DropboxManager(object):
                 problem.set("max_attempts", self.default_attempts)
 
             if not self.rename:
-                verticalfile=self.course_folder+"/vertical/"+os.path.splitext(os.path.basename(filename))[0].split("_")[0]+".xml"
-                vertical = etree.parse(source=verticalfile).getroot()
                 problem.set("display_name", vertical.get("display_name"))
 
             problem_content=etree.tostring(problem)
@@ -104,6 +115,8 @@ class DropboxManager(object):
 
         shutil.rmtree(dirpath)
 
+    def sortchildrenby(self, parent, attr):
+        parent[:] = sorted(parent, key=lambda child: child.get(attr))
 
     def removeBOM(self, path):
         bytes = min(32, os.path.getsize(path))
