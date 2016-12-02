@@ -264,10 +264,13 @@ class csv2edx(object):
             currentVertical.append(newVideoItem)
         else:
             if "forum" in lecture_element:
+                discussionName = currentVertical.get("display_name")
+                if ":" in lecture_element:
+                    discussionName= lecture_element.split(":")[1]
                 discussionItem = etree.Element("discussion", attrib={})
                 discussionItem.set("url_name", currentVertical.get("url_name"))
-                discussionItem.set("display_name", currentVertical.get("display_name"))
-                discussionItem.set("discussion_target", currentVertical.get("display_name"))
+                discussionItem.set("display_name", discussionName)
+                discussionItem.set("discussion_target", discussionName)
                 currentVertical.append(discussionItem)
             elif "html" in lecture_element or (lecture_element=="" and self.existsHtmlFile(currentVertical.get("url_name"))):
                 htmlItem = etree.Element("html", attrib={})
