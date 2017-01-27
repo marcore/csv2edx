@@ -54,6 +54,11 @@ class DropboxManager(object):
             shutil.move(data, self.course_folder+"/html/"+os.path.basename(data))
         shutil.rmtree(dirpath)
 
+    def process_assessment(self, assessment_folder):
+        dirpath = self.download_folder(assessment_folder)
+        for data in glob.glob(dirpath+"/*.xml"):
+            shutil.move(data, self.course_folder+"/vertical/"+os.path.basename(data))
+        shutil.rmtree(dirpath)
 
     def process_quiz(self, quiz_folder):
         dirpath = self.download_folder(quiz_folder)
@@ -66,12 +71,15 @@ class DropboxManager(object):
                     print "extracting "+str(z)+ " to"+self.course_folder
                     z.extractall(self.course_folder+"/problem")
                 for data in glob.glob(self.course_folder+"/problem/*.png"):
+                    os.remove(self.course_folder+"/static/images/"+os.path.basename(data))
                     shutil.move(data, self.course_folder+"/static/images/")
                 for data in glob.glob(self.course_folder+"/problem/*.jpg"):
+                    os.remove(self.course_folder+"/static/images/"+os.path.basename(data))
                     shutil.move(data, self.course_folder+"/static/images/")
             elif file_extension == ".xml":
                 shutil.move(filename, self.course_folder+"/problem/")
             elif file_extension == ".png" or file_extension == "jpg":
+                os.remove(self.course_folder+"/static/images/"+os.path.basename(filename))
                 shutil.move(filename, self.course_folder+"/static/images/")
 
         for filename in glob.glob(self.course_folder+"/problem/*.xml"):
@@ -80,7 +88,7 @@ class DropboxManager(object):
             problem = etree.parse(source=problem_file).getroot()
             problem_url_name = os.path.splitext(os.path.basename(filename))[0]
             url_name = self.course_folder+"/vertical/"+problem_url_name.split("_")[0]
-            verticalfile=url_name+".xml"
+            verticalfile=self.course_folder+"/vertical/"+problem_url_name.split("_")[0].upper()+".xml"
             parser = etree.XMLParser(remove_blank_text=True)
             vertical = etree.parse(source=verticalfile, parser=parser).getroot()
             xpath = './/problem[url_name="'+problem_url_name+'"]'
@@ -119,14 +127,17 @@ class DropboxManager(object):
         parent[:] = sorted(parent, key=lambda child: child.get(attr))
 
     def removeBOM(self, path):
+
         bytes = min(32, os.path.getsize(path))
         raw = open(path, 'rb').read(bytes)
         if raw.startswith(codecs.BOM_UTF8):
             encoding = 'utf-8-sig'
         else:
             result = chardet.detect(raw)
+            print "Encoding in "+ str(path)+" " + str(result)
             encoding = result['encoding']
-
+        if 'utf-8' not in encoding :
+            return
         with io.open(path, "r", encoding=encoding) as file:
             filedata = file.read()
 

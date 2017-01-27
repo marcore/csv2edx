@@ -386,6 +386,15 @@ class csv2edx(object):
         else:
             print "No html_folder configurated in csv2edx.cfg file"
 
+    def copyAssessment(self):
+
+        vertical_assessment_folder = self.dropbox_config.get("vertical_assessment_folder")
+        if vertical_assessment_folder:
+            dr = DropboxManager(self.output_dir)
+            dr.process_assessment(vertical_assessment_folder)
+        else:
+            print "No html_folder configurated in csv2edx.cfg file"
+
 def CommandLine():
     config = ConfigParser.ConfigParser()
     config.read(CONFIG_FILENAME)
@@ -451,4 +460,5 @@ def CommandLine():
     c.convert()
     c.copyHtml()
     c.copyQuiz()
+    c.copyAssessment()
     c.copyAndConvertSrt()
