@@ -1,6 +1,6 @@
 sudo: required #is required to use docker service in travis
 
-language: go
+language: python
 cache:
   directories:
     - /home/travis/docker/
