@@ -18,7 +18,7 @@ env:
 
 before_install:
   - docker --version
-  - pip install awscli 
+  - pip install awscli
   - export PATH=$PATH:$HOME/.local/bin # put aws in the path
   - echo "ENV GIT_SHA ${TRAVIS_COMMIT}" >> Dockerfile
   - if [ -f ${DOCKER_CACHE_FILE} ]; then gunzip -c ${DOCKER_CACHE_FILE} | docker load; fi
@@ -27,6 +27,8 @@ install:
   # Take advantage of docker caching by pulling previously built images.
   - docker build -t ${DOCKER_IMAGE_NAME}:${TRAVIS_COMMIT} --pull=true .
 
+script:
+  - echo "Need to add tests"
 after_success:
   - eval $(aws ecr get-login --region eu-west-1) #needs AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY envvars
   - docker build -t ${DOCKER_IMAGE_NAME} .
