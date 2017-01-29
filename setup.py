@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='csv2edx',
@@ -17,7 +17,8 @@ setup(
             ],
         },
     install_requires=['lxml == 3.2.0',
-                      'path.py',
+                      'path.py <= 7.7.1',
+                      'pysrt == 1.0.1',
                       'dropbox == 7.1.1'
                       ],
     package_dir={'csv2edx': 'csv2edx'},
