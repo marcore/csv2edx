@@ -24,7 +24,7 @@ after_success:
   - export PATH=$PATH:$HOME/.local/bin # put aws in the path
   - eval $(aws ecr get-login --region eu-west-1) #needs AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY envvars
   - docker build -t csv2edx .
-  - docker tag csv2edx:latest $AWS_ECR_REGISTRY/csv2edx:latest
-  - docker push $AWS_ECR_REGISTRY/csv2edx:latest
+  - docker tag csv2edx:latest ${AWS_ECR_REGISTRY}/csv2edx:latest
+  - docker push ${AWS_ECR_REGISTRY}/csv2edx:latest
 
   # sadly, travis doesn't cache docker builds yet, so each build will take a while
