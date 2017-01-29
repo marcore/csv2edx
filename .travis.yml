@@ -1,30 +1,34 @@
 sudo: required #is required to use docker service in travis
 
 language: go
+cache:
+  directories:
+    - /home/travis/docker/
 
 services:
   - docker # required, but travis uses older version of docker :(
 
-install:
-  - echo "install nothing!" # put your normal pre-testing installs here
-
-script:
-  - echo "no tests!" # put your normal testing scripts here
-
 env:
   global:
+  - DOCKER_CACHE_FILE=/home/travis/docker/cache.tar.gz
   - secure: "P/rUfNQ6pswumTXIaNYagYtYBKTV8K+59rsFS77svL1Kt2sbpAnlsMlwfFjh66LL8c+Oxx0nlCcDdceRZPendiqBV5tApJh5ne2HGJkRdMh75QMvQqwi/yekblqaZpfwR9tbRpEztbTunpR70YiueKBGu7v1PGSbuH3pVke43Tg=" #AWS_ACCESS_KEY_ID
   - secure: c633i7GyqrddeKWb54glefPP4148G0RHnEfeeVmgeLZtPitkH+ZAM9UjhBLLYvNfG8E0X9T8A8RZadmaxZfTtYwfexS7x7AlzWBzHJT1sDaRXBgn8Kxyr5cYxt5swwBstymPlgnfxA+B6CjX9OoMdjKvlU7HFqUr4SUwDaqAjiI= #AWS_SECRET_ACCESS_KEY
   - secure: "qCfWzgUMnWMA1XuPfQI+mgFXC3o8X5I6STGeqwZQeQsPtAgTo3mLeshsmg7LAmScB9MPA2J0ltnG1p4N0BJTMRvV6tesa5D8oNYqsW16MvJ+XirB6Bk3GAmbmHZ6saJJZCeRz0H6SMdrE8lQg6HltyAP94izCLBMmSlgLfUi8eI=" #AWS_ECR_REGISTRY
 
-
-after_success:
-  - docker --version  # document the version travis is using
+before_install:
+  - docker --version
   - pip install --user awscli # install aws cli w/o sudo
   - export PATH=$PATH:$HOME/.local/bin # put aws in the path
+  - echo "ENV GIT_SHA ${TRAVIS_COMMIT}" >> Dockerfile
+  - if [ -f ${DOCKER_CACHE_FILE} ]; then gunzip -c ${DOCKER_CACHE_FILE} | docker load; fi
+
+install:
+  # Take advantage of docker caching by pulling previously built images.
+  - docker build -t ${AWS_ECR_REGISTRY}:${TRAVIS_COMMIT} --pull=true .
+
+after_success:
   - eval $(aws ecr get-login --region eu-west-1) #needs AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY envvars
   - docker build -t csv2edx .
+  - if [[ ${TRAVIS_BRANCH} == "master" ]] && [[ ${TRAVIS_PULL_REQUEST} == "false" ]]; then mkdir -p $(dirname ${DOCKER_CACHE_FILE}) ; docker save $(docker history -q ${AWS_ECR_REGISTRY}:${TRAVIS_COMMIT} | grep -v '<missing>') | gzip > ${DOCKER_CACHE_FILE}; fi
   - docker tag csv2edx:latest ${AWS_ECR_REGISTRY}/csv2edx:latest
   - docker push ${AWS_ECR_REGISTRY}/csv2edx:latest
-
-  # sadly, travis doesn't cache docker builds yet, so each build will take a while
