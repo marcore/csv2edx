@@ -18,7 +18,7 @@ env:
 
 before_install:
   - docker --version
-  - pip install --user awscli # install aws cli w/o sudo
+  - pip install awscli 
   - export PATH=$PATH:$HOME/.local/bin # put aws in the path
   - echo "ENV GIT_SHA ${TRAVIS_COMMIT}" >> Dockerfile
   - if [ -f ${DOCKER_CACHE_FILE} ]; then gunzip -c ${DOCKER_CACHE_FILE} | docker load; fi
